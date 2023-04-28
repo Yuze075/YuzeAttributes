@@ -42,9 +42,9 @@ namespace YuzeToolkit.Attributes
         public static explicit operator ListValue<object>(ListValue<T> target)
         {
             var result = new ListValue<object>();
-            foreach (var kvp in target)
+            foreach (var kv in target)
             {
-                result.Add(kvp.Key, kvp.Value);
+                result.Add(kv.Key, kv.Value);
             }
 
             return result;

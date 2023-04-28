@@ -12,8 +12,8 @@ namespace YuzeToolkit.Attributes.Editor
         private static bool IsPathValid(string propertyPath, string assetRelativePath)
         {
             var targetPath = string.IsNullOrEmpty(assetRelativePath)
-                ? Path.Combine(Application.dataPath, propertyPath)
-                : Path.Combine(Application.dataPath, assetRelativePath, propertyPath);
+                ? Path.Combine(Application.dataPath[..^7], propertyPath)
+                : Path.Combine(Application.dataPath[..^7], assetRelativePath, propertyPath);
 
             return File.Exists(targetPath);
         }
@@ -29,7 +29,7 @@ namespace YuzeToolkit.Attributes.Editor
 
         private static void UseFilePicker(SerializedProperty property, string relativePath)
         {
-            var baseDataPath = Application.dataPath;
+            var baseDataPath = Application.dataPath[..^7];
             var baseOpenPath = string.Empty;
             if (!string.IsNullOrEmpty(relativePath))
             {

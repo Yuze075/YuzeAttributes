@@ -12,8 +12,8 @@ namespace YuzeToolkit.Attributes.Editor
         private static bool IsPathValid(string propertyPath, string assetRelativePath)
         {
             var targetPath = string.IsNullOrEmpty(assetRelativePath)
-                ? Path.Combine(Application.dataPath, propertyPath)
-                : Path.Combine(Application.dataPath, assetRelativePath, propertyPath);
+                ? Path.Combine(Application.dataPath[..^7], propertyPath)
+                : Path.Combine(Application.dataPath[..^7], assetRelativePath, propertyPath);
 
             return Directory.Exists(targetPath);
         }
@@ -29,7 +29,7 @@ namespace YuzeToolkit.Attributes.Editor
 
         private static void UseDirectoryPicker(SerializedProperty property, string relativePath)
         {
-            var baseDataPath = Application.dataPath;
+            var baseDataPath = Application.dataPath[..^7];
             var baseOpenPath = Path.GetFileName(baseDataPath);
             if (!string.IsNullOrEmpty(relativePath))
             {
