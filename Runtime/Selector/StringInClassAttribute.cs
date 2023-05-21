@@ -8,11 +8,13 @@ namespace YuzeToolkit.Attributes
     {
         public Type TargetType { get; }
         public string MatchRule { get; }
+        public bool HasLabel  { get; }
 
-        public StringInClassAttribute(Type targetType, string matchRule = "")
+        public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true)
         {
             TargetType = targetType;
             MatchRule = matchRule;
+            HasLabel = hasLabel;
         }
     }
 }

@@ -31,8 +31,9 @@ namespace YuzeToolkit.Attributes.Editor
                 selectedIndex = listStr.IndexOf(property.stringValue);
             }
 
-            selectedIndex = EditorGUI.Popup(position, label.text,
-                selectedIndex, listStr.ToArray());
+            selectedIndex = stringInClassAttribute.HasLabel
+                ? EditorGUI.Popup(position, label.text, selectedIndex, listStr.ToArray())
+                : EditorGUI.Popup(position, selectedIndex, listStr.ToArray());
 
             property.stringValue = selectedIndex switch
             {
