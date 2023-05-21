@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +20,9 @@ namespace YuzeToolkit.Attributes.Editor
             var stringInClassAttribute =
                 (StringInClassAttribute)attribute;
             var targetType = stringInClassAttribute.TargetType;
-            var matchRule = stringInClassAttribute.MatchRule;
+            var matchRule = string.IsNullOrWhiteSpace(stringInClassAttribute.MatchRuleValueName)
+                ? stringInClassAttribute.MatchRule
+                : property.serializedObject.FindProperty(stringInClassAttribute.MatchRuleValueName).stringValue;
 
             var listStr = new List<string> { "<empty>" };
             listStr.AddRange(targetType.GetFields(BindingFlags.Static | BindingFlags.Public)
