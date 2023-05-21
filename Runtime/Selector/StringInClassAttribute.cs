@@ -9,7 +9,7 @@ namespace YuzeToolkit.Attributes
         public Type TargetType { get; }
         public string MatchRule { get; }
 
-        public StringInClassAttribute(Type targetType, string matchRule)
+        public StringInClassAttribute(Type targetType, string matchRule = "")
         {
             TargetType = targetType;
             MatchRule = matchRule;
