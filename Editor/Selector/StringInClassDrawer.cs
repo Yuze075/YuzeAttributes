@@ -24,25 +24,35 @@ namespace YuzeToolkit.Attributes.Editor
                 ? stringInClassAttribute.MatchRule
                 : property.serializedObject.FindProperty(stringInClassAttribute.MatchRuleValueName).stringValue;
 
-            var listStr = new List<string> { "<empty>" };
-            listStr.AddRange(targetType.GetFields(BindingFlags.Static | BindingFlags.Public)
-                .Select(t => (string)t.GetValue(null))
-                .Where(str => !string.IsNullOrEmpty(str) && Regex.IsMatch(str, matchRule)));
+            var listName = new List<string> { "<empty>" };
+            var listValue = new List<string> { "<empty>" };
 
-            var selectedIndex = 0;
-            if (listStr.Contains(property.stringValue))
+            var fields = targetType.GetFields(BindingFlags.Static | BindingFlags.Public);
+            foreach (var field in fields)
             {
-                selectedIndex = listStr.IndexOf(property.stringValue);
+                var name = field.Name;
+                var value = (string)field.GetValue(null);
+                if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value, matchRule)) continue;
+                listName.Add(name);
+                listValue.Add(value);
             }
 
+            var selectedIndex = 0;
+            if (listValue.Contains(property.stringValue))
+            {
+                selectedIndex = listValue.IndexOf(property.stringValue);
+            }
+
+            var popupList = stringInClassAttribute.UseValueToName ? listValue : listName;
+
             selectedIndex = stringInClassAttribute.HasLabel
-                ? EditorGUI.Popup(position, label.text, selectedIndex, listStr.ToArray())
-                : EditorGUI.Popup(position, selectedIndex, listStr.ToArray());
+                ? EditorGUI.Popup(position, label.text, selectedIndex, popupList.ToArray())
+                : EditorGUI.Popup(position, selectedIndex, popupList.ToArray());
 
             property.stringValue = selectedIndex switch
             {
                 0 => "",
-                > 0 when selectedIndex < listStr.Count => listStr[selectedIndex],
+                > 0 when selectedIndex < listValue.Count => listValue[selectedIndex],
                 _ => property.stringValue
             };
 
