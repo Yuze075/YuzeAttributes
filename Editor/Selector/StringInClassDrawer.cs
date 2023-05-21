@@ -31,7 +31,7 @@ namespace YuzeToolkit.Attributes.Editor
             foreach (var field in fields)
             {
                 var name = field.Name;
-                var value = (string)field.GetValue(null);
+                var value = field.GetValue(null) is string ? (string)field.GetValue(null) : "";
                 if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value, matchRule)) continue;
                 listName.Add(name);
                 listValue.Add(value);
