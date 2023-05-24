@@ -10,17 +10,20 @@ namespace YuzeToolkit.Attributes
         public Type TargetType { get; }
         public string MatchRule { get; }
         public bool HasLabel { get; }
-        public string MatchRuleValueName { get; }
         public bool UseValueToName { get; }
+        public bool DrawNewTextToMatchRule { get; }
+        public Type NewTextTargetType { get; }
+        public string NewTextMatchRule { get; set; } = "";
 
         public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
-            string matchRuleValueName = "", bool useValueToName = true)
+            bool useValueToName = true, bool drawNewTextToMatchRule = false, Type newTextTargetType = null)
         {
             TargetType = targetType;
             MatchRule = matchRule;
             HasLabel = hasLabel;
-            MatchRuleValueName = matchRuleValueName;
             UseValueToName = useValueToName;
+            DrawNewTextToMatchRule = drawNewTextToMatchRule;
+            NewTextTargetType = newTextTargetType;
         }
     }
 }
