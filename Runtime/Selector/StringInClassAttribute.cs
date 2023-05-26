@@ -15,17 +15,6 @@ namespace YuzeToolkit.Attributes
         public Type NewTextTargetType { get; }
         public string NewTextMatchRule { get; set; } = "";
 
-        [Obsolete]
-        public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
-            bool useValueToName = true, bool drawNewTextToMatchRule = false, Type newTextTargetType = null)
-        {
-            TargetType = targetType;
-            MatchRule = matchRule;
-            HasLabel = hasLabel;
-            UseValueToName = useValueToName;
-            NewTextTargetType = newTextTargetType;
-        }
-
         public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
             bool useValueToName = true
         )
