@@ -15,23 +15,14 @@ namespace YuzeToolkit.Attributes
         public Type NewTextTargetType { get; }
         public string NewTextMatchRule { get; set; } = "";
 
-        public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
-            bool useValueToName = true
-        )
+        public StringInClassAttribute(Type targetType,string matchRule = "", Type matchRuleType = null, bool hasLabel = true,
+            bool useValueToName = true)
         {
             TargetType = targetType;
             MatchRule = matchRule;
             HasLabel = hasLabel;
             UseValueToName = useValueToName;
-        }
-
-        public StringInClassAttribute(Type targetType, Type matchRuleType = null, bool hasLabel = true,
-            bool useValueToName = true)
-        {
-            TargetType = targetType;
             NewTextTargetType = matchRuleType;
-            HasLabel = hasLabel;
-            UseValueToName = useValueToName;
         }
     }
 }
