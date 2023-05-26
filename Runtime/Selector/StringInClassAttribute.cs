@@ -11,10 +11,11 @@ namespace YuzeToolkit.Attributes
         public string MatchRule { get; }
         public bool HasLabel { get; }
         public bool UseValueToName { get; }
-        public bool DrawNewTextToMatchRule { get; }
+        public bool DrawNewTextToMatchRule => NewTextTargetType != null;
         public Type NewTextTargetType { get; }
         public string NewTextMatchRule { get; set; } = "";
 
+        [Obsolete]
         public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
             bool useValueToName = true, bool drawNewTextToMatchRule = false, Type newTextTargetType = null)
         {
@@ -22,8 +23,26 @@ namespace YuzeToolkit.Attributes
             MatchRule = matchRule;
             HasLabel = hasLabel;
             UseValueToName = useValueToName;
-            DrawNewTextToMatchRule = drawNewTextToMatchRule;
             NewTextTargetType = newTextTargetType;
+        }
+
+        public StringInClassAttribute(Type targetType, string matchRule = "", bool hasLabel = true,
+            bool useValueToName = true
+        )
+        {
+            TargetType = targetType;
+            MatchRule = matchRule;
+            HasLabel = hasLabel;
+            UseValueToName = useValueToName;
+        }
+
+        public StringInClassAttribute(Type targetType, Type matchRuleType = null, bool hasLabel = true,
+            bool useValueToName = true)
+        {
+            TargetType = targetType;
+            NewTextTargetType = matchRuleType;
+            HasLabel = hasLabel;
+            UseValueToName = useValueToName;
         }
     }
 }
