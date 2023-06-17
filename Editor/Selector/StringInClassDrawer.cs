@@ -12,9 +12,10 @@ namespace YuzeToolkit.Attributes.Editor
     [CustomPropertyDrawer(typeof(StringInClassAttribute))]
     public class StringInClassDrawer : PropertyDrawer
     {
-        private bool _stringIsInClass;
-        private bool _meetMatchRule;
+        private bool _stringIsInClass = true;
+        private bool _meetMatchRule = true;
         private bool _openMatchRule;
+        private string _matchRule;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -49,50 +50,76 @@ namespace YuzeToolkit.Attributes.Editor
 
             var stringInClassAttribute = (StringInClassAttribute)attribute;
             var height = EditorGUI.GetPropertyHeight(property);
-            var matchRule = "";
 
-            // 绘制提示框
-            if (!_meetMatchRule)
+            DrawMatchRule(ref rect, stringInClassAttribute, height);
+
+            DrawStringField(ref rect, property, stringInClassAttribute, height);
+
+            DrawStringWarnBox(ref rect, height);
+        }
+
+        /// <summary>
+        /// 绘制提示文本, 提示字符串可能存在的错误
+        /// </summary>
+        private void DrawStringWarnBox(ref Rect rect, float height)
+        {
+            if (_meetMatchRule) return;
+
+            // 绘制提示框, 更加不同情况展示不同文本
+            DrawPromptBox(new Rect(rect.position, new Vector2(rect.width, height)),
+                _stringIsInClass ? "↑ String is not meeting match rule!" : "↑ String is not in class!");
+
+            // 重新设置矩形大小
+            rect = new Rect(new Vector2(rect.x, rect.y + height),
+                new Vector2(rect.width, rect.height - height));
+        }
+
+        /// <summary>
+        /// 绘制MatchRule字符串框体, 可以输入和选择MatchRule
+        /// </summary>
+        private void DrawMatchRule(ref Rect rect, StringInClassAttribute stringInClassAttribute, float height)
+        {
+            // 没有开启MatchRule, 直接返回
+            if (!_openMatchRule)
             {
-                DrawPromptBox(new Rect(rect.position, new Vector2(rect.width, height)),
-                    _stringIsInClass ? "String is not meeting match rule!" : "String is not in class!");
-
-                // 重新设置矩形大小
-                rect = new Rect(new Vector2(rect.x, rect.y + height),
-                    new Vector2(rect.width, rect.height - height));
+                _matchRule = "";
+                return;
             }
 
-            // 绘制MatchRule输入框
-            if (_openMatchRule)
+            // 绘制字MatchRule符串显示框体
+            stringInClassAttribute.MatchRule = EditorGUI.TextField(
+                new Rect(rect.position, new Vector2(rect.width - height, height)), new GUIContent("MatchRule: "),
+                stringInClassAttribute.MatchRule);
+            // 获取MatchRuleType中的所有字符串
+            var (matchListName, matchListValue) = GetStringInClass(stringInClassAttribute.MatchRuleType);
+            var matchIndex = matchListValue.IndexOf(stringInClassAttribute.MatchRule);
+
+            // 绘制下拉菜单框体
+            matchIndex = EditorGUI.Popup(new Rect(
+                    new Vector2(rect.x + rect.width - height, rect.y), new Vector2(height, height)),
+                matchIndex, matchListName.ToArray());
+
+            // 设置MatchRule字符串数据
+            stringInClassAttribute.MatchRule = matchIndex switch
             {
-                // 绘制字符串显示框体
-                stringInClassAttribute.MatchRule = EditorGUI.TextField(
-                    new Rect(rect.position, new Vector2(rect.width - height, height)), "MatchRule: ",
-                    stringInClassAttribute.MatchRule);
+                0 => "",
+                > 0 when matchIndex < matchListValue.Count => matchListValue[matchIndex],
+                _ => stringInClassAttribute.MatchRule
+            };
 
-                // 获取MatchRuleType中的所有字符串
-                var (matchListName, matchListValue) = GetStringInClass(stringInClassAttribute.MatchRuleType);
-                var matchIndex = matchListValue.IndexOf(stringInClassAttribute.MatchRule);
+            _matchRule = stringInClassAttribute.MatchRule;
 
-                // 绘制下拉菜单框体
-                matchIndex = EditorGUI.Popup(new Rect(
-                        new Vector2(rect.x + rect.width - height, rect.y), new Vector2(height, height)),
-                    matchIndex, matchListName.ToArray());
+            // 重新设置矩形大小
+            rect = new Rect(new Vector2(rect.x, rect.y + height), new Vector2(rect.width, rect.height - height));
+        }
 
-                // 设置MatchRule字符串数据
-                stringInClassAttribute.MatchRule = matchIndex switch
-                {
-                    0 => "",
-                    > 0 when matchIndex < matchListValue.Count => matchListValue[matchIndex],
-                    _ => stringInClassAttribute.MatchRule
-                };
 
-                matchRule = stringInClassAttribute.MatchRule;
-
-                // 重新设置矩形大小
-                rect = new Rect(new Vector2(rect.x, rect.y + height), new Vector2(rect.width, rect.height - height));
-            }
-
+        /// <summary>
+        /// 绘制字符串输入框体
+        /// </summary>
+        private void DrawStringField(ref Rect rect, SerializedProperty property,
+            StringInClassAttribute stringInClassAttribute, float height)
+        {
             // 绘制MatchRule开关
             _openMatchRule = EditorGUI.Toggle(
                 new Rect(rect.position, new Vector2(height, height)),
@@ -104,7 +131,7 @@ namespace YuzeToolkit.Attributes.Editor
                 property.stringValue = EditorGUI.TextField(new Rect(
                         new Vector2(rect.x + height, rect.y),
                         new Vector2(rect.width - 2 * height, height)),
-                    property.displayName, property.stringValue);
+                    new GUIContent(property.displayName), property.stringValue);
             }
             else
             {
@@ -124,7 +151,7 @@ namespace YuzeToolkit.Attributes.Editor
 
             // 判断是否为MatchRule所需要的
             (listName, listValue) =
-                GetStringInClass(stringInClassAttribute.TargetType, matchRule);
+                GetStringInClass(stringInClassAttribute.TargetType, _matchRule);
             index = listValue.IndexOf(property.stringValue);
             _meetMatchRule = index >= 0;
 
@@ -140,12 +167,16 @@ namespace YuzeToolkit.Attributes.Editor
                 > 0 when index < listValue.Count => listValue[index],
                 _ => property.stringValue
             };
+
+            // 重新设置矩形大小
+            rect = new Rect(new Vector2(rect.x, rect.y + height),
+                new Vector2(rect.width, rect.height - height));
         }
 
         /// <summary>
         /// 绘制提示框
         /// </summary>
-        public static void DrawPromptBox(Rect rect, string prompt)
+        private static void DrawPromptBox(Rect rect, string prompt)
         {
             var warningContent = new GUIContent(prompt)
             {
@@ -157,7 +188,7 @@ namespace YuzeToolkit.Attributes.Editor
         /// <summary>
         /// 获取对于的<see cref="string"/>列表, 默认返回列表包含一个空值
         /// </summary>
-        public static (List<string> listName, List<string> listValue) GetStringInClass(Type targetType,
+        private static (List<string> listName, List<string> listValue) GetStringInClass(Type targetType,
             string matchRule = "")
         {
             var listName = new List<string> { "<Empty>" };

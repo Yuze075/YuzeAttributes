@@ -7,7 +7,6 @@ namespace YuzeToolkit.Attributes
     public class StringInClassAttribute : PropertyAttribute
     {
         public Type TargetType { get; }
-
         public string MatchRule { get; set; }
         public Type MatchRuleType { get; }
         public bool HasLabel { get; }
