@@ -12,151 +12,184 @@ namespace YuzeToolkit.Attributes.Editor
     [CustomPropertyDrawer(typeof(StringInClassAttribute))]
     public class StringInClassDrawer : PropertyDrawer
     {
-        private bool _isDropdownMode = true;
+        private bool _stringIsInClass;
+        private bool _meetMatchRule;
+        private bool _openMatchRule;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var stringInClassAttribute =
-                (StringInClassAttribute)attribute;
-            return base.GetPropertyHeight(property, label) * (stringInClassAttribute.DrawNewTextToMatchRule ? 2 : 1);
+            var height = EditorGUI.GetPropertyHeight(property);
+            var ret = height;
+            if (property.propertyType != SerializedPropertyType.String)
+            {
+                return ret;
+            }
+
+            if (!_meetMatchRule)
+            {
+                ret += height;
+            }
+
+            if (_openMatchRule)
+            {
+                ret += height;
+            }
+
+            return ret;
         }
 
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.BeginProperty(rect, label, property);
-            if (property.propertyType == SerializedPropertyType.String)
+            // 判断是否为string类型, 不是直接报错
+            if (property.propertyType != SerializedPropertyType.String)
             {
-                var stringInClassAttribute =
-                    (StringInClassAttribute)attribute;
-                var targetType = stringInClassAttribute.TargetType;
+                DrawPromptBox(rect, property.displayName + "(Incorrect Attribute Used)");
+                return;
+            }
 
-                // 获取到对应的matchRule
-                if (stringInClassAttribute.DrawNewTextToMatchRule)
-                {
-                    rect = new Rect(rect.position, new Vector2(rect.width, rect.height / 2));
-                    if (stringInClassAttribute.NewTextTargetType != null)
-                    {
-                        _isDropdownMode =
-                            EditorGUI.Toggle(new Rect(rect.position, new Vector2(rect.height, rect.height)),
-                                _isDropdownMode);
-                        if (_isDropdownMode)
-                        {
-                            stringInClassAttribute.NewTextMatchRule = DrawNewTextString(new Rect(rect.x + rect.height,
-                                rect.y, rect.width - rect.height, rect.height));
-                        }
-                        else
-                        {
-                            stringInClassAttribute.NewTextMatchRule = EditorGUI.TextField(
-                                new Rect(rect.x + rect.height, rect.y, rect.width - rect.height, rect.height),
-                                "MatchRule", stringInClassAttribute.NewTextMatchRule);
-                        }
-                    }
-                    else
-                    {
-                        stringInClassAttribute.NewTextMatchRule = EditorGUI.TextField(rect, "MatchRule", stringInClassAttribute.NewTextMatchRule);
-                    }
+            var stringInClassAttribute = (StringInClassAttribute)attribute;
+            var height = EditorGUI.GetPropertyHeight(property);
+            var matchRule = "";
 
-                    rect = new Rect(new Vector2(rect.x, rect.y + rect.height), rect.size);
-                }
-                else
-                {
-                    stringInClassAttribute.NewTextMatchRule = stringInClassAttribute.MatchRule;
-                }
+            // 绘制提示框
+            if (!_meetMatchRule)
+            {
+                DrawPromptBox(new Rect(rect.position, new Vector2(rect.width, height)),
+                    _stringIsInClass ? "String is not meeting match rule!" : "String is not in class!");
 
-                // 创建两个列表分别存name和value
-                var listName = new List<string> { "<empty>" };
-                var listValue = new List<string> { "<empty>" };
+                // 重新设置矩形大小
+                rect = new Rect(new Vector2(rect.x, rect.y + height),
+                    new Vector2(rect.width, rect.height - height));
+            }
 
-                // 找到类中所有的字段
-                var fields = targetType.GetFields(BindingFlags.Static | BindingFlags.Public);
-                foreach (var field in fields)
-                {
-                    // 获取name和value
-                    var name = field.Name;
-                    var value = field.GetValue(null) is string ? (string)field.GetValue(null) : "";
+            // 绘制MatchRule输入框
+            if (_openMatchRule)
+            {
+                // 绘制字符串显示框体
+                stringInClassAttribute.MatchRule = EditorGUI.TextField(
+                    new Rect(rect.position, new Vector2(rect.width - height, height)), "MatchRule: ",
+                    stringInClassAttribute.MatchRule);
 
-                    // 如果值为空, 或者不满足筛选条件则不添加进列表中
-                    if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value, stringInClassAttribute.NewTextMatchRule)) continue;
-                    listName.Add(name);
-                    listValue.Add(value);
-                }
+                // 获取MatchRuleType中的所有字符串
+                var (matchListName, matchListValue) = GetStringInClass(stringInClassAttribute.MatchRuleType);
+                var matchIndex = matchListValue.IndexOf(stringInClassAttribute.MatchRule);
 
-                // 获取当前字符串选择的值的index
-                var selectedIndex = 0;
-                if (listValue.Contains(property.stringValue))
-                {
-                    selectedIndex = listValue.IndexOf(property.stringValue);
-                }
+                // 绘制下拉菜单框体
+                matchIndex = EditorGUI.Popup(new Rect(
+                        new Vector2(rect.x + rect.width - height, rect.y), new Vector2(height, height)),
+                    matchIndex, matchListName.ToArray());
 
-                // 选择列表显示的是name和value
-                var popupList = stringInClassAttribute.UseValueToName ? listValue : listName;
-
-                // 绘制列表, 根据设置选择是否绘制Label
-                selectedIndex = stringInClassAttribute.HasLabel
-                    ? EditorGUI.Popup(rect, label.text, selectedIndex, popupList.ToArray())
-                    : EditorGUI.Popup(rect, selectedIndex, popupList.ToArray());
-
-                // 更新字段的值
-                property.stringValue = selectedIndex switch
+                // 设置MatchRule字符串数据
+                stringInClassAttribute.MatchRule = matchIndex switch
                 {
                     0 => "",
-                    > 0 when selectedIndex < listValue.Count => listValue[selectedIndex],
-                    _ => property.stringValue
+                    > 0 when matchIndex < matchListValue.Count => matchListValue[matchIndex],
+                    _ => stringInClassAttribute.MatchRule
                 };
+
+                matchRule = stringInClassAttribute.MatchRule;
+
+                // 重新设置矩形大小
+                rect = new Rect(new Vector2(rect.x, rect.y + height), new Vector2(rect.width, rect.height - height));
+            }
+
+            // 绘制MatchRule开关
+            _openMatchRule = EditorGUI.Toggle(
+                new Rect(rect.position, new Vector2(height, height)),
+                _openMatchRule);
+
+            // 绘制不同的PropertyField
+            if (stringInClassAttribute.HasLabel)
+            {
+                property.stringValue = EditorGUI.TextField(new Rect(
+                        new Vector2(rect.x + height, rect.y),
+                        new Vector2(rect.width - 2 * height, height)),
+                    property.displayName, property.stringValue);
             }
             else
             {
-                var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                property.stringValue = EditorGUI.TextField(new Rect(
+                        new Vector2(rect.x + height, rect.y),
+                        new Vector2(rect.width - 2 * height, height)),
+                    property.stringValue);
             }
 
-            EditorGUI.EndProperty();
+            List<string> listName;
+            List<string> listValue;
+
+            // 判断是否在整个Class中
+            (_, listValue) = GetStringInClass(stringInClassAttribute.TargetType);
+            var index = listValue.IndexOf(property.stringValue);
+            _stringIsInClass = index >= 0;
+
+            // 判断是否为MatchRule所需要的
+            (listName, listValue) =
+                GetStringInClass(stringInClassAttribute.TargetType, matchRule);
+            index = listValue.IndexOf(property.stringValue);
+            _meetMatchRule = index >= 0;
+
+            // 绘制下拉菜单
+            index = EditorGUI.Popup(
+                new Rect(new Vector2(rect.x + rect.width - height, rect.y), new Vector2(height, height)),
+                index, stringInClassAttribute.UseValueToName ? listValue.ToArray() : listName.ToArray());
+
+            // 绑定数据
+            property.stringValue = index switch
+            {
+                0 => "",
+                > 0 when index < listValue.Count => listValue[index],
+                _ => property.stringValue
+            };
         }
 
-        private string DrawNewTextString(Rect rect)
+        /// <summary>
+        /// 绘制提示框
+        /// </summary>
+        public static void DrawPromptBox(Rect rect, string prompt)
         {
-            var stringInClassAttribute =
-                (StringInClassAttribute)attribute;
-            var targetType = stringInClassAttribute.NewTextTargetType;
+            var warningContent = new GUIContent(prompt)
+            {
+                image = EditorGUIUtility.IconContent("console.warnicon").image
+            };
+            EditorGUI.LabelField(rect, warningContent);
+        }
 
-            // 创建两个列表分别存name和value
-            var listName = new List<string> { "<empty>" };
-            var listValue = new List<string> { "<empty>" };
+        /// <summary>
+        /// 获取对于的<see cref="string"/>列表, 默认返回列表包含一个空值
+        /// </summary>
+        public static (List<string> listName, List<string> listValue) GetStringInClass(Type targetType,
+            string matchRule = "")
+        {
+            var listName = new List<string> { "<Empty>" };
+            var listValue = new List<string> { "<Empty>" };
 
-            // 找到类中所有的字段
+            if (targetType == null) return (listName, listValue);
+
             var fields = targetType.GetFields(BindingFlags.Static | BindingFlags.Public);
             foreach (var field in fields)
             {
                 // 获取name和value
                 var name = field.Name;
-                var value = field.GetValue(null) is string ? (string)field.GetValue(null) : "";
+                var value = GetStingValue(field);
 
-                // 如果值为空, 则不添加进列表中
-                if (string.IsNullOrWhiteSpace(value)) continue;
+                // 如果值为空, 或者不满足筛选条件则不添加进列表中
+                if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value, matchRule)) continue;
                 listName.Add(name);
                 listValue.Add(value);
             }
 
-            // 获取当前字符串选择的值的index
-            var selectedIndex = 0;
-            if (listValue.Contains(stringInClassAttribute.NewTextMatchRule))
+            return (listName, listValue);
+
+            static string GetStingValue(FieldInfo fieldInfo)
             {
-                selectedIndex = listValue.IndexOf(stringInClassAttribute.NewTextMatchRule);
+                var value = fieldInfo.GetValue(null);
+                if (value is string s)
+                {
+                    return s;
+                }
+
+                return "";
             }
-
-            // 绘制列表, 根据设置选择是否绘制Label
-            selectedIndex = EditorGUI.Popup(rect, "MatchRule", selectedIndex, listName.ToArray());
-
-            // 更新字段的值
-            return selectedIndex switch
-            {
-                0 => "",
-                > 0 when selectedIndex < listValue.Count => listValue[selectedIndex],
-                _ => stringInClassAttribute.NewTextMatchRule
-            };
         }
     }
 }

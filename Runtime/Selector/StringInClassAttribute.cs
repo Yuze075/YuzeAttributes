@@ -4,25 +4,23 @@ using UnityEngine;
 namespace YuzeToolkit.Attributes
 {
     [AttributeUsage(AttributeTargets.Field)]
-    [Serializable]
     public class StringInClassAttribute : PropertyAttribute
     {
         public Type TargetType { get; }
-        public string MatchRule { get; }
+
+        public string MatchRule { get; set; }
+        public Type MatchRuleType { get; }
         public bool HasLabel { get; }
         public bool UseValueToName { get; }
-        public bool DrawNewTextToMatchRule => NewTextTargetType != null;
-        public Type NewTextTargetType { get; }
-        public string NewTextMatchRule { get; set; } = "";
 
-        public StringInClassAttribute(Type targetType,string matchRule = "", Type matchRuleType = null, bool hasLabel = true,
-            bool useValueToName = true)
+        public StringInClassAttribute(Type targetType, string matchRule = "", Type matchRuleType = null,
+            bool hasLabel = true, bool useValueToName = false)
         {
             TargetType = targetType;
             MatchRule = matchRule;
+            MatchRuleType = matchRuleType;
             HasLabel = hasLabel;
             UseValueToName = useValueToName;
-            NewTextTargetType = matchRuleType;
         }
     }
 }
