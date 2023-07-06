@@ -15,45 +15,40 @@ namespace YuzeToolkit.Attributes.Editor
         {
             EditorGUI.BeginProperty(rect, label, property);
 
-            if (property.propertyType == SerializedPropertyType.String)
+            if (property.propertyType != SerializedPropertyType.String)
             {
-                // generate the tagList + custom tags
-                var tagList = new List<string>
-                {
-                    "(None)",
-                    "Untagged"
-                };
-                tagList.AddRange(UnityEditorInternal.InternalEditorUtility.tags);
-
-                var propertyString = property.stringValue;
-                var index = 0;
-                // check if there is an entry that matches the entry and get the index
-                // we skip index 0 as that is a special custom case
-                for (var i = 1; i < tagList.Count; i++)
-                {
-                    if (!tagList[i].Equals(propertyString, StringComparison.Ordinal)) continue;
-                    index = i;
-                    break;
-                }
-
-                // Draw the popup box with the current selected index
-                var newIndex = EditorGUI.Popup(rect, label.text, index, tagList.ToArray());
-
-                // Adjust the actual string value of the property based on the selection
-                var newValue = newIndex > 0 ? tagList[newIndex] : string.Empty;
-
-                if (!property.stringValue.Equals(newValue, StringComparison.Ordinal))
-                {
-                    property.stringValue = newValue;
-                }
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(错误的特性使用!)");
+                EditorGUI.EndProperty();
+                return;
             }
-            else
+
+            // 添加基础的Tag和所有自定义Tag
+            var tagList = new List<string>
             {
-                var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                "(None)",
+                "Untagged"
+            };
+            tagList.AddRange(UnityEditorInternal.InternalEditorUtility.tags);
+
+            var propertyString = property.stringValue;
+            var index = 0;
+            // 检查当前变量是否在Tags列表中
+            for (var i = 1; i < tagList.Count; i++)
+            {
+                if (!tagList[i].Equals(propertyString, StringComparison.Ordinal)) continue;
+                index = i;
+                break;
+            }
+
+            // 绘制下拉菜单
+            var newIndex = EditorGUI.Popup(rect, label.text, index, tagList.ToArray());
+
+            // 获取到最新的tag值, 并进行赋值
+            var newValue = newIndex > 0 ? tagList[newIndex] : string.Empty;
+
+            if (!property.stringValue.Equals(newValue, StringComparison.Ordinal))
+            {
+                property.stringValue = newValue;
             }
 
             EditorGUI.EndProperty();

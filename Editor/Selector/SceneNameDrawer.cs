@@ -88,30 +88,26 @@ namespace YuzeToolkit.Attributes.Editor
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(rect, label, property);
-            if (property.propertyType == SerializedPropertyType.String)
+            if (property.propertyType != SerializedPropertyType.String)
             {
-                if (!SceneExists(property.stringValue))
-                {
-                    rect = DrawWarningMessage(rect);
-                    rect.yMin = rect.yMax + Style.Spacing;
-                    rect.yMax = rect.yMin + Style.RowHeight;
-                }
-
-                rect.xMax -= Style.PickerWidth + Style.Spacing;
-                EditorGUI.PropertyField(rect, property, label);
-                rect.xMax += Style.PickerWidth + Style.Spacing;
-                rect.xMin = rect.xMax - Style.PickerWidth;
-
-                HandleTargetPicker(rect, property);
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(错误的特性使用!)");
+                EditorGUI.EndProperty();
+                return;
             }
-            else
+
+            if (!SceneExists(property.stringValue))
             {
-                var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                rect = DrawWarningMessage(rect);
+                rect.yMin = rect.yMax + Style.Spacing;
+                rect.yMax = rect.yMin + Style.RowHeight;
             }
+
+            rect.xMax -= Style.PickerWidth + Style.Spacing;
+            EditorGUI.PropertyField(rect, property, label);
+            rect.xMax += Style.PickerWidth + Style.Spacing;
+            rect.xMin = rect.xMax - Style.PickerWidth;
+
+            HandleTargetPicker(rect, property);
 
             EditorGUI.EndProperty();
         }

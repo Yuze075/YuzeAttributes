@@ -22,11 +22,7 @@ namespace YuzeToolkit.Attributes.Editor
                     DrawPropertyForInt(rect, property, label, Layers);
                     break;
                 default:
-                    var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
-                    {
-                        image = EditorGUIUtility.IconContent("console.warnicon").image
-                    };
-                    EditorGUI.LabelField(rect, warningContent);
+                    AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(错误的特性使用!)");
                     break;
             }
 

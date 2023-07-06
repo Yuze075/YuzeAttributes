@@ -23,39 +23,35 @@ namespace YuzeToolkit.Attributes.Editor
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(rect, label, property);
-            if (property.propertyType == SerializedPropertyType.ObjectReference)
+            if (property.propertyType != SerializedPropertyType.ObjectReference)
             {
-                var propertyRect = new Rect()
-                {
-                    x = rect.x,
-                    y = rect.y,
-                    width = rect.width,
-                    height = EditorGUIUtility.singleLineHeight
-                };
-
-                EditorGUI.PropertyField(propertyRect, property, label);
-
-                var previewTexture = GetAssetPreview(property);
-                if (previewTexture != null)
-                {
-                    var previewRect = new Rect()
-                    {
-                        x = rect.x + GetIndentLength(rect),
-                        y = rect.y + EditorGUIUtility.singleLineHeight,
-                        width = rect.width,
-                        height = GetAssetPreviewSize(property, attribute as AssetPreviewAttribute).y
-                    };
-
-                    GUI.Label(previewRect, previewTexture);
-                }
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(错误的特性使用!)");
+                EditorGUI.EndProperty();
+                return;
             }
-            else
+
+            var propertyRect = new Rect()
             {
-                var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
+                x = rect.x,
+                y = rect.y,
+                width = rect.width,
+                height = EditorGUIUtility.singleLineHeight
+            };
+
+            EditorGUI.PropertyField(propertyRect, property, label);
+
+            var previewTexture = GetAssetPreview(property);
+            if (previewTexture != null)
+            {
+                var previewRect = new Rect()
                 {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
+                    x = rect.x + GetIndentLength(rect),
+                    y = rect.y + EditorGUIUtility.singleLineHeight,
+                    width = rect.width,
+                    height = GetAssetPreviewSize(property, attribute as AssetPreviewAttribute).y
                 };
-                EditorGUI.LabelField(rect, warningContent);
+
+                GUI.Label(previewRect, previewTexture);
             }
 
             EditorGUI.EndProperty();

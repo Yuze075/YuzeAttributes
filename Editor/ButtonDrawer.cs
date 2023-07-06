@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
@@ -10,32 +11,29 @@ namespace YuzeToolkit.Attributes.Editor
     {
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
-            if (attribute is not ButtonAttribute buttonAttribute) return;
-            var methodName = buttonAttribute.MethodName;
-            var target = property.serializedObject.targetObject;
-            var type = target.GetType();
-            var method = type.GetMethod(methodName,
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            if (method == null)
+            EditorGUI.BeginProperty(rect, label, property);
+            var buttonAttribute = (ButtonAttribute)attribute;
+
+            var target = AttributeHelperEditor.GetTargetObjectWithProperty(property);
+            var methodInfos = AttributeHelperRuntime.GetAllMethods(target.GetType(), buttonAttribute.MethodName);
+
+            // 如果没有对应函数, 提升出错
+            var enumerable = methodInfos as MethodInfo[] ?? methodInfos.ToArray();
+            if (enumerable.Length <= 0)
             {
-                var warningContent = new GUIContent(property.displayName + "(Method could not be found.)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(无法找到对应函数!)");
+                EditorGUI.EndProperty();
                 return;
             }
 
-            if (method.GetParameters().Length > 0)
+            var methodInfo = enumerable.FirstOrDefault(info => info.GetParameters().Length <= 0);
+            if (methodInfo == null)
             {
-                var warningContent = new GUIContent(property.displayName + "(Method cannot have parameters.)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(不存在无参函数!)");
+                EditorGUI.EndProperty();
                 return;
             }
-
+            
             var canInvoke = buttonAttribute.SelectedEnableMode switch
             {
                 ButtonEnableMode.Always => true,
@@ -43,25 +41,23 @@ namespace YuzeToolkit.Attributes.Editor
                 ButtonEnableMode.Playmode => EditorApplication.isPlaying,
                 _ => false
             };
-
+            
             if (!canInvoke)
             {
-                var warningContent = new GUIContent(property.displayName + "(Method can't Invoke.)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(当前不能触发函数!)");
+                EditorGUI.EndProperty();
                 return;
             }
-
+            
             var text = string.IsNullOrEmpty(buttonAttribute.Text)
-                ? method.Name
+                ? methodInfo.Name
                 : buttonAttribute.Text;
-
+            
             if (GUI.Button(rect, text))
             {
-                method.Invoke(target, null);
+                methodInfo.Invoke(target, null);
             }
+            EditorGUI.EndProperty();
         }
     }
 }

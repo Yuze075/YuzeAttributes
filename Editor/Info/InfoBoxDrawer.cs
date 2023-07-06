@@ -35,13 +35,13 @@ namespace YuzeToolkit.Attributes.Editor
             return height;
         }
 
-        private static void DrawInfoBox(Rect rect, string infoText, InfoBoxAttribute.EInfoBoxType infoBoxType)
+        private static void DrawInfoBox(Rect rect, string infoText, InfoType infoType)
         {
-            var messageType = infoBoxType switch
+            var messageType = infoType switch
             {
-                InfoBoxAttribute.EInfoBoxType.Normal => MessageType.Info,
-                InfoBoxAttribute.EInfoBoxType.Warning => MessageType.Warning,
-                InfoBoxAttribute.EInfoBoxType.Error => MessageType.Error,
+                InfoType.Normal => MessageType.Info,
+                InfoType.Warning => MessageType.Warning,
+                InfoType.Error => MessageType.Error,
                 _ => MessageType.None
             };
             EditorGUI.HelpBox(rect, infoText, messageType);

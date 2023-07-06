@@ -8,17 +8,17 @@ namespace YuzeToolkit.Attributes.Editor
     {
         public override float GetHeight()
         {
-            var lineAttr = (DividerLineAttribute)attribute;
-            return EditorGUIUtility.singleLineHeight + lineAttr.Height;
+            var dividerLineAttribute = (DividerLineAttribute)attribute;
+            return EditorGUIUtility.singleLineHeight + dividerLineAttribute.Height;
         }
 
         public override void OnGUI(Rect position)
         {
+            var dividerLineAttribute = (DividerLineAttribute)attribute;
             var rect = EditorGUI.IndentedRect(position);
             rect.y += EditorGUIUtility.singleLineHeight / 3.0f;
-            var lineAttr = (DividerLineAttribute)attribute;
-            rect.height = lineAttr.Height;
-            EditorGUI.DrawRect(rect, DividerLineAttribute.GetColor(lineAttr.Color));
+            rect.height = dividerLineAttribute.Height;
+            EditorGUI.DrawRect(rect, dividerLineAttribute.Color.GetColor());
         }
     }
 }

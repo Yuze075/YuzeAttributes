@@ -7,19 +7,12 @@ namespace YuzeToolkit.Attributes
     public class InfoBoxAttribute : PropertyAttribute
     {
         public string Text { get; }
-        public EInfoBoxType Type { get; }
+        public InfoType Type { get; }
 
-        public InfoBoxAttribute(string text, EInfoBoxType type = EInfoBoxType.Normal)
+        public InfoBoxAttribute(string text, InfoType type = InfoType.Normal)
         {
             Text = text;
             Type = type;
-        }
-        
-        public enum EInfoBoxType
-        {
-            Normal,
-            Warning,
-            Error
         }
     }
 }

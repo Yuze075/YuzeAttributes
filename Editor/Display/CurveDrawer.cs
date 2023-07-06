@@ -10,35 +10,29 @@ namespace YuzeToolkit.Attributes.Editor
         {
             EditorGUI.BeginProperty(rect, label, property);
 
-            if (property.propertyType == SerializedPropertyType.AnimationCurve)
+            if (property.propertyType != SerializedPropertyType.AnimationCurve)
             {
-                var curveRangeAttribute = (CurveAttribute)attribute;
-                var curveRanges = new Rect(
-                    curveRangeAttribute.Min.x,
-                    curveRangeAttribute.Min.y,
-                    curveRangeAttribute.Max.x - curveRangeAttribute.Min.x,
-                    curveRangeAttribute.Max.y - curveRangeAttribute.Min.y);
-
-                EditorGUI.CurveField(
-                    rect,
-                    property,
-                    curveRangeAttribute.Color == CurveAttribute.ColorType.Clear
-                        ? Color.green
-                        : CurveAttribute.GetColor(curveRangeAttribute.Color),
-                    curveRanges,
-                    label);
-            }
-            else
-            {
-                var warningContent = new GUIContent(property.displayName + "(Incorrect Attribute Used)")
-                {
-                    image = EditorGUIUtility.IconContent("console.warnicon").image
-                };
-                EditorGUI.LabelField(rect, warningContent);
+                AttributeHelperEditor.DrawWarningMessage(rect, property.displayName + "(错误的特性使用!)");
+                EditorGUI.EndProperty();
                 return;
             }
 
+            var curveRangeAttribute = (CurveAttribute)attribute;
+            var curveRanges = new Rect(
+                curveRangeAttribute.Min.x,
+                curveRangeAttribute.Min.y,
+                curveRangeAttribute.Max.x - curveRangeAttribute.Min.x,
+                curveRangeAttribute.Max.y - curveRangeAttribute.Min.y);
 
+            EditorGUI.CurveField(
+                rect,
+                property,
+                curveRangeAttribute.Color == CurveAttribute.ColorType.Clear
+                    ? Color.green
+                    : CurveAttribute.GetColor(curveRangeAttribute.Color),
+                curveRanges,
+                label);
+            
             EditorGUI.EndProperty();
         }
     }
